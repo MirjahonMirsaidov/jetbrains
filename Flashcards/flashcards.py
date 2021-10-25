@@ -1,7 +1,9 @@
 import random
 from io import StringIO
+import argparse
 
 mem_buffer = StringIO()
+parser = argparse.ArgumentParser()  # to get user input from command line arguments
 
 FLASH_CARDS = {}
 
@@ -65,9 +67,7 @@ def remove():
 
 
 # import flashcards from a file
-def importt():
-    log_and_print("File name:")
-    file_name = input()
+def importt(file_name):
     try:
         with open(file_name, 'r') as f:
             count = 0
@@ -76,19 +76,18 @@ def importt():
                 FLASH_CARDS.update({
                     term: {
                         'definition': definition,
-                        'mistakes': mistakes
+                        'mistakes': int(mistakes)
                     }
                 })
                 count += 1
-            log_and_print(str(count) + ' cards have been loaded.')
+            if count > 0:
+                log_and_print(str(count) + ' cards have been loaded.')
     except FileNotFoundError:
         log_and_print("File not found.")
 
 
 # write all flashcards to a file
-def export():
-    log_and_print("File name:")
-    file_name = input()
+def export(file_name):
     with open(file_name, 'w') as f:
         for term in FLASH_CARDS.keys():
             f.write(term + ' ' + FLASH_CARDS[term]['definition'] + ' ' + str(FLASH_CARDS[term]['mistakes']) + '\n')
@@ -150,6 +149,12 @@ def reset_stats():
     log_and_print("Card statistics have been reset.")
 
 
+parser.add_argument('--import_from')
+parser.add_argument('--export_to')
+args = parser.parse_args() # reading argument strings from the command line
+if args.import_from:
+    importt(args.import_from)
+
 while True:
     log_and_print("Input the action (add, remove, import, export, ask, exit, log, hardest card, reset stats):")
     action = input()
@@ -158,9 +163,13 @@ while True:
     elif action == "remove":
         remove()
     elif action == "import":
-        importt()
+        log_and_print("File name:")
+        file_name = input()
+        importt(file_name)
     elif action == "export":
-        export()
+        log_and_print("File name:")
+        file_name = input()
+        export(file_name)
     elif action == "ask":
         ask()
     elif action == 'log':
@@ -171,5 +180,7 @@ while True:
         reset_stats()
     elif action == "exit":
         print("Bye bye!")
+        if args.export_to:
+            export(args.export_to)
         mem_buffer.close()
         break
